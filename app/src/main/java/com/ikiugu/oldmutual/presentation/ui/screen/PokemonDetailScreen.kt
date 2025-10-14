@@ -6,7 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -56,7 +56,7 @@ fun PokemonDetailScreen(
             },
             navigationIcon = {
                 IconButton(onClick = onBackClick) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.back))
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                 }
             }
         )
@@ -253,7 +253,7 @@ private fun StatItem(
         Spacer(modifier = Modifier.height(4.dp))
         
         LinearProgressIndicator(
-            progress = value.toFloat() / maxValue,
+            progress = { value.toFloat() / maxValue },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(dimensionResource(R.dimen.progress_bar_height))
