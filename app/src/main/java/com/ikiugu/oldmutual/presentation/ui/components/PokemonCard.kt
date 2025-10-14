@@ -1,5 +1,6 @@
 package com.ikiugu.oldmutual.presentation.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -16,7 +18,31 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.domain.entity.Pokemon
-import com.ikiugu.oldmutual.ui.theme.OldMutualTheme
+import com.ikiugu.oldmutual.ui.theme.*
+
+private fun getTypeColor(type: String): Color {
+    return when (type.lowercase()) {
+        "normal" -> TypeNormal
+        "fire" -> TypeFire
+        "water" -> TypeWater
+        "electric" -> TypeElectric
+        "grass" -> TypeGrass
+        "ice" -> TypeIce
+        "fighting" -> TypeFighting
+        "poison" -> TypePoison
+        "ground" -> TypeGround
+        "flying" -> TypeFlying
+        "psychic" -> TypePsychic
+        "bug" -> TypeBug
+        "rock" -> TypeRock
+        "ghost" -> TypeGhost
+        "dragon" -> TypeDragon
+        "dark" -> TypeDark
+        "steel" -> TypeSteel
+        "fairy" -> TypeFairy
+        else -> TypeNormal
+    }
+}
 
 @Composable
 fun PokemonCard(
@@ -24,12 +50,18 @@ fun PokemonCard(
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val primaryType = pokemon.types.firstOrNull() ?: "normal"
+    val typeColor = getTypeColor(primaryType).copy(alpha = 0.15f)
+    
     Card(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick(pokemon.id) },
         shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = typeColor
+        )
     ) {
         Column(
             modifier = Modifier
