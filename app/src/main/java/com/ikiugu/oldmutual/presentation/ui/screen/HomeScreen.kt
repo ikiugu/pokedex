@@ -2,6 +2,7 @@ package com.ikiugu.oldmutual.presentation.ui.screen
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
@@ -13,6 +14,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonCard
 import com.ikiugu.oldmutual.presentation.ui.viewmodel.HomeViewModel
@@ -25,6 +29,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pokemonPagingItems: LazyPagingItems<com.ikiugu.oldmutual.domain.entity.Pokemon> = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -49,47 +54,116 @@ fun HomeScreen(
         )
         
         when {
-            uiState.isLoading && uiState.pokemonList.isEmpty() -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-            
-            uiState.error != null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+            uiState.searchQuery.isNotBlank() -> {
+                // Show search results
+                if (uiState.isLoading && uiState.searchResults.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = stringResource(R.string.error, uiState.error.toString()),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
-                        Button(onClick = viewModel::retry) {
-                            Text(stringResource(R.string.retry))
+                        CircularProgressIndicator()
+                    }
+                } else if (uiState.error != null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = stringResource(R.string.error, uiState.error.toString()),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
+                            Button(onClick = viewModel::retry) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(dimensionResource(R.dimen.content_padding)),
+                        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding)),
+                        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding))
+                    ) {
+                        items(uiState.searchResults.size) { index ->
+                            val pokemon = uiState.searchResults[index]
+                            PokemonCard(
+                                pokemon = pokemon,
+                                onClick = onPokemonClick
+                            )
                         }
                     }
                 }
             }
             
             else -> {
+                // Show paged Pokemon list
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(dimensionResource(R.dimen.content_padding)),
                     verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding)),
                     horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding))
                 ) {
-                    items(uiState.pokemonList) { pokemon ->
-                        PokemonCard(
-                            pokemon = pokemon,
-                            onClick = onPokemonClick
-                        )
+                    items(
+                        count = pokemonPagingItems.itemCount,
+                        key = { index -> pokemonPagingItems[index]?.id ?: index }
+                    ) { index ->
+                        val pokemon = pokemonPagingItems[index]
+                        if (pokemon != null) {
+                            PokemonCard(
+                                pokemon = pokemon,
+                                onClick = onPokemonClick
+                            )
+                        } else {
+                            // Show placeholder while loading
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(1f),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+                    
+                    // Handle loading states
+                    when (pokemonPagingItems.loadState.append) {
+                        is LoadState.Loading -> {
+                            item(span = { GridItemSpan(2) }) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(dimensionResource(R.dimen.content_padding)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                        is LoadState.Error -> {
+                            item(span = { GridItemSpan(2) }) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(dimensionResource(R.dimen.content_padding)),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.error, "Failed to load more Pokemon"),
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
+                                    Button(onClick = { pokemonPagingItems.retry() }) {
+                                        Text(stringResource(R.string.retry))
+                                    }
+                                }
+                            }
+                        }
+                        else -> {}
                     }
                 }
             }

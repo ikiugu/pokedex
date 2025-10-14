@@ -21,6 +21,7 @@ mockito = "5.12.0"
 mockitoKotlin = "5.3.1"
 coroutinesTest = "1.8.0"
 timber = "5.0.1"
+paging = "3.3.6"
 
 [libraries]
 # Core Android
@@ -72,6 +73,10 @@ mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mo
 mockito-kotlin = { group = "org.mockito.kotlin", name = "mockito-kotlin", version.ref = "mockitoKotlin" }
 coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
+
+# Paging
+androidx-paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
+androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

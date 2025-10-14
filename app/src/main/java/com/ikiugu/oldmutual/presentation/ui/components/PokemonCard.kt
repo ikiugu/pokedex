@@ -50,9 +50,6 @@ fun PokemonCard(
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val primaryType = pokemon.types.firstOrNull() ?: "normal"
-    val typeColor = getTypeColor(primaryType).copy(alpha = 0.15f)
-    
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -60,7 +57,7 @@ fun PokemonCard(
         shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = typeColor
+            containerColor = Color(0xFFF5F5F5)
         )
     ) {
         Column(

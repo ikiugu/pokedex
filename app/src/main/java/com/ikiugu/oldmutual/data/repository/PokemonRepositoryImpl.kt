@@ -1,5 +1,9 @@
 package com.ikiugu.oldmutual.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.map
 import com.ikiugu.oldmutual.data.local.dao.PokemonDao
 import com.ikiugu.oldmutual.data.local.dao.PokemonDetailDao
 import com.ikiugu.oldmutual.data.mapper.toDetail
@@ -7,6 +11,7 @@ import com.ikiugu.oldmutual.data.mapper.toDetailEntity
 import com.ikiugu.oldmutual.data.mapper.toDomain
 import com.ikiugu.oldmutual.data.mapper.toEntity
 import com.ikiugu.oldmutual.data.local.entity.PokemonEntity
+import com.ikiugu.oldmutual.data.paging.PokemonPagingSource
 import com.ikiugu.oldmutual.data.remote.api.PokemonApiService
 import com.ikiugu.oldmutual.data.util.retryWithBackoff
 import com.ikiugu.oldmutual.domain.entity.Pokemon
@@ -31,51 +36,16 @@ class PokemonRepositoryImpl @Inject constructor(
     private val pokemonDetailDao: PokemonDetailDao
 ) : PokemonRepository {
 
-    override fun getPokemonList(page: Int, pageSize: Int): Flow<Result<List<Pokemon>>> = flow {
-        emit(Result.Loading)
-        
-        try {
-            val cachedPokemon = pokemonDao.getAllPokemon().first()
-                .map { it.toDomain() }
-            if (cachedPokemon.isNotEmpty()) {
-                Timber.d("Emitting cached Pokémon data: ${cachedPokemon.size} items")
-                emit(Result.Success(cachedPokemon))
-            }
-            
-            val response = retryWithBackoff {
-                Timber.d("Fetching Pokémon list from API - page: $page, size: $pageSize")
-                apiService.getPokemonList(limit = pageSize, offset = page * pageSize)
-            }
-            
-            if (response.isSuccessful && response.body() != null) {
-                val pokemonEntities = response.body()!!.results.mapIndexed { index, result ->
-                    PokemonEntity(
-                        id = page * pageSize + index + 1,
-                        name = result.name,
-                        imageUrl = buildImageUrl(page * pageSize + index + 1),
-                        types = "[]",
-                        baseExperience = 0,
-                        height = 0,
-                        weight = 0,
-                        isLoaded = false
-                    )
-                }
-                
-                pokemonDao.insertAll(pokemonEntities)
-                Timber.d("Saved ${pokemonEntities.size} Pokémon to database")
-                
-                val updatedPokemon = pokemonDao.getAllPokemon().first()
-                    .map { it.toDomain() }
-                emit(Result.Success(updatedPokemon))
-            } else {
-                emit(Result.Error(PokemonError.NetworkError))
-            }
-            
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to fetch Pokémon list")
-            emit(Result.Error(e.toPokemonError()))
+    override fun getPokemonList(): Flow<PagingData<Pokemon>> = Pager(
+        config = PagingConfig(
+            pageSize = 20,
+            enablePlaceholders = false,
+            prefetchDistance = 5
+        ),
+        pagingSourceFactory = {
+            PokemonPagingSource(apiService, pokemonDao, pokemonDetailDao)
         }
-    }.flowOn(Dispatchers.IO)
+    ).flow
 
     override fun getPokemonDetail(id: Int): Flow<Result<PokemonDetail>> = flow {
         emit(Result.Loading)
@@ -114,9 +84,16 @@ class PokemonRepositoryImpl @Inject constructor(
         emit(Result.Loading)
         
         try {
-            val searchResults = pokemonDao.searchPokemon(query).first()
+            val localResults = pokemonDao.searchPokemon(query).first()
                 .map { it.toDomain() }
-            emit(Result.Success(searchResults))
+            
+            if (localResults.isNotEmpty()) {
+                emit(Result.Success(localResults))
+            }
+            
+            if (localResults.isEmpty()) {
+                emit(Result.Success(emptyList()))
+            }
         } catch (e: Exception) {
             Timber.e(e, "Failed to search Pokémon")
             emit(Result.Error(e.toPokemonError()))

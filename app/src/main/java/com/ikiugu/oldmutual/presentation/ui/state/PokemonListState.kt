@@ -5,6 +5,7 @@ import com.ikiugu.oldmutual.domain.error.PokemonError
 
 data class PokemonListState(
     val pokemonList: List<Pokemon> = emptyList(),
+    val searchResults: List<Pokemon> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
     val error: PokemonError? = null,
