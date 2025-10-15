@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,6 +60,7 @@ import com.ikiugu.pokedex.presentation.ui.utils.getContentPadding
 import com.ikiugu.pokedex.presentation.ui.utils.getImageSize
 import com.ikiugu.pokedex.presentation.ui.utils.getTypeColor
 import com.ikiugu.pokedex.presentation.ui.viewmodel.PokemonDetailViewModel
+import com.ikiugu.pokedex.ui.theme.Dimens
 import com.ikiugu.pokedex.ui.theme.StatAttack
 import com.ikiugu.pokedex.ui.theme.StatDefault
 import com.ikiugu.pokedex.ui.theme.StatDefense
@@ -182,14 +184,15 @@ private fun PokemonDetailContent(
 ) {
     val scrollState = rememberScrollState(scrollPosition)
     
-    LaunchedEffect(scrollState.value) {
-        onScrollPositionChanged(scrollState.value)
+    LaunchedEffect(scrollState) {
+        snapshotFlow { scrollState.value }
+            .collect { onScrollPositionChanged(it) }
     }
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
     val imageSize = getImageSize(configuration) * if (isLandscape) 2.5f else 3.5f
-    val headerHeight = if (isLandscape) 200.dp else dimensionResource(R.dimen.carousel_height)
+    val headerHeight = if (isLandscape) Dimens.HeaderHeightLandscape else dimensionResource(R.dimen.carousel_height)
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -218,9 +221,9 @@ private fun PokemonDetailContent(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            Color(0xFF2C3E50),
-                            Color(0xFF34495E),
-                            Color(0xFF1A252F)
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.surfaceVariant
                         )
                     )
                 )
