@@ -60,6 +60,9 @@ dependencies {
     // Paging
     implementation(libs.androidx.paging.runtime)
     
+    // Logging
+    implementation(libs.timber)
+    
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
