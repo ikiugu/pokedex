@@ -17,4 +17,12 @@
     <dimen name="type_padding_horizontal">12dp</dimen>
     <dimen name="type_padding_vertical">6dp</dimen>
     <dimen name="type_corner_radius">16dp</dimen>
+    <dimen name="loader_size">120dp</dimen>
+    <dimen name="loader_ring_size">100dp</dimen>
+    <dimen name="loader_inner_size">60dp</dimen>
+    <dimen name="loader_dot_size">20dp</dimen>
+    <dimen name="loader_small_dot_size">8dp</dimen>
+    <dimen name="loader_spacing">16dp</dimen>
+    <dimen name="carousel_height">280dp</dimen>
+    <dimen name="placeholder_icon_size">24dp</dimen>
 </resources>

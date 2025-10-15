@@ -1,27 +1,43 @@
 package com.ikiugu.oldmutual.presentation.ui.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ikiugu.oldmutual.R
+import com.ikiugu.oldmutual.domain.entity.Pokemon
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonCard
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonLoader
 import com.ikiugu.oldmutual.presentation.ui.viewmodel.HomeViewModel
@@ -35,7 +51,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val pokemonPagingItems: LazyPagingItems<com.ikiugu.oldmutual.domain.entity.Pokemon> = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
+    val pokemonPagingItems: LazyPagingItems<Pokemon> = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -63,7 +79,7 @@ fun HomeScreen(
             uiState.searchQuery.isNotBlank() -> {
                 if (uiState.isLoading && uiState.searchResults.isEmpty()) {
                     PokemonLoader(
-                        message = "Searching Pokémon..."
+                        message = stringResource(R.string.searching_pokemon)
                     )
                 } else if (uiState.error != null) {
                     SearchErrorContent(
@@ -82,12 +98,12 @@ fun HomeScreen(
                 when (pokemonPagingItems.loadState.refresh) {
                     is LoadState.Loading -> {
                         PokemonLoader(
-                            message = "Loading Pokémon..."
+                            message = stringResource(R.string.loading_pokemon)
                         )
                     }
                     is LoadState.Error -> {
                         SearchErrorContent(
-                            error = "Failed to load Pokémon list",
+                            error = stringResource(R.string.failed_to_load_pokemon_list),
                             onRetry = { pokemonPagingItems.retry() }
                         )
                     }
@@ -129,7 +145,7 @@ private fun SearchErrorContent(
 
 @Composable
 private fun SearchResultsGrid(
-    results: List<com.ikiugu.oldmutual.domain.entity.Pokemon>,
+    results: List<Pokemon>,
     onPokemonClick: (Int) -> Unit
 ) {
     LazyVerticalGrid(
@@ -150,7 +166,7 @@ private fun SearchResultsGrid(
 
 @Composable
 private fun PagedPokemonGrid(
-    pokemonPagingItems: LazyPagingItems<com.ikiugu.oldmutual.domain.entity.Pokemon>,
+    pokemonPagingItems: LazyPagingItems<Pokemon>,
     onPokemonClick: (Int) -> Unit
 ) {
     LazyVerticalGrid(
@@ -196,7 +212,7 @@ private fun PagedPokemonGrid(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = stringResource(R.string.error, "Failed to load more Pokemon"),
+                            text = stringResource(R.string.error, stringResource(R.string.failed_to_load_more_pokemon)),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
@@ -223,9 +239,9 @@ private fun LoadingPlaceholder() {
             ),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator(
-            modifier = Modifier.size(24.dp),
-            color = TypeElectric
-        )
+            CircularProgressIndicator(
+                modifier = Modifier.size(dimensionResource(R.dimen.placeholder_icon_size)),
+                color = TypeElectric
+            )
     }
 }

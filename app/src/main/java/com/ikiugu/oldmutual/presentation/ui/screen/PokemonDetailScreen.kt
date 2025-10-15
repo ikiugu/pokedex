@@ -114,7 +114,7 @@ fun PokemonDetailScreen(
         when {
             uiState.isLoading -> {
                 PokemonLoader(
-                    message = "Loading Pokémon details..."
+                    message = stringResource(R.string.loading_pokemon_details)
                 )
             }
 
@@ -150,7 +150,7 @@ private fun PokemonDetailContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(280.dp)
+                .height(dimensionResource(R.dimen.carousel_height))
                 .background(headerColor),
             contentAlignment = Alignment.Center
         ) {
