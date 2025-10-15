@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
@@ -26,32 +27,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ikiugu.oldmutual.R
+import com.ikiugu.oldmutual.presentation.ui.components.PokemonLoader
+import com.ikiugu.oldmutual.presentation.ui.utils.getTypeColor
 import com.ikiugu.oldmutual.presentation.ui.viewmodel.PokemonDetailViewModel
 import com.ikiugu.oldmutual.ui.theme.*
 
-private fun getTypeColor(type: String): Color {
-    return when (type.lowercase()) {
-        "normal" -> TypeNormal
-        "fire" -> TypeFire
-        "water" -> TypeWater
-        "electric" -> TypeElectric
-        "grass" -> TypeGrass
-        "ice" -> TypeIce
-        "fighting" -> TypeFighting
-        "poison" -> TypePoison
-        "ground" -> TypeGround
-        "flying" -> TypeFlying
-        "psychic" -> TypePsychic
-        "bug" -> TypeBug
-        "rock" -> TypeRock
-        "ghost" -> TypeGhost
-        "dragon" -> TypeDragon
-        "dark" -> TypeDark
-        "steel" -> TypeSteel
-        "fairy" -> TypeFairy
-        else -> TypeNormal
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +43,6 @@ fun PokemonDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Set status bar color immediately when composable loads
     val view = LocalView.current
     DisposableEffect(Unit) {
         val window = (view.context as android.app.Activity).window
@@ -71,7 +50,6 @@ fun PokemonDetailScreen(
         WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
 
         onDispose {
-            // Reset to default when leaving the screen
             window.statusBarColor = Color.White.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
         }
@@ -85,45 +63,25 @@ fun PokemonDetailScreen(
         val primaryType = uiState.pokemonDetail!!.pokemon.types.firstOrNull() ?: "normal"
         getTypeColor(primaryType)
     } else {
-        null
+        Color.White
     }
 
-    // Animated colors for smooth transitions
     val animatedTopAppBarColor by animateColorAsState(
-        targetValue = headerColor ?: Color.White,
+        targetValue = headerColor,
         animationSpec = tween(durationMillis = 500),
         label = "topAppBarColor"
     )
 
     val animatedTextColor by animateColorAsState(
-        targetValue = if (headerColor != null) Color.White else Color.Black,
+        targetValue = if (headerColor != Color.White) Color.White else Color.Black,
         animationSpec = tween(durationMillis = 500),
         label = "textColor"
     )
 
-    LaunchedEffect(uiState.pokemonDetail) {
-        if (uiState.pokemonDetail != null) {
-            val primaryType = uiState.pokemonDetail!!.pokemon.types.firstOrNull() ?: "normal"
-            val pokemonHeaderColor = getTypeColor(primaryType)
+    LaunchedEffect(headerColor) {
+        if (headerColor != Color.White) {
             val window = (view.context as android.app.Activity).window
-
-            // Animate the color transition
-            val startColor = Color.White
-            val steps = 30
-            val stepDuration = 16L // ~60fps
-
-            for (i in 0..steps) {
-                val progress = i.toFloat() / steps
-                val animatedColor = Color(
-                    red = startColor.red + (pokemonHeaderColor.red - startColor.red) * progress,
-                    green = startColor.green + (pokemonHeaderColor.green - startColor.green) * progress,
-                    blue = startColor.blue + (pokemonHeaderColor.blue - startColor.blue) * progress,
-                    alpha = 1f
-                )
-                window.statusBarColor = animatedColor.toArgb()
-                kotlinx.coroutines.delay(stepDuration)
-            }
-
+            window.statusBarColor = headerColor.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
@@ -155,32 +113,16 @@ fun PokemonDetailScreen(
 
         when {
             uiState.isLoading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                PokemonLoader(
+                    message = "Loading Pokémon details..."
+                )
             }
 
             uiState.error != null -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(R.string.error, uiState.error.toString()),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
-                        Button(onClick = { viewModel.retry(pokemonId) }) {
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
-                }
+                ErrorContent(
+                    error = uiState.error.toString(),
+                    onRetry = { viewModel.retry(pokemonId) }
+                )
             }
 
             uiState.pokemonDetail != null -> {
@@ -197,11 +139,10 @@ fun PokemonDetailScreen(
 @Composable
 private fun PokemonDetailContent(
     pokemonDetail: com.ikiugu.oldmutual.domain.entity.PokemonDetail,
-    headerColor: Color?,
+    headerColor: Color,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
-    val finalHeaderColor = headerColor ?: getTypeColor(pokemonDetail.pokemon.types.firstOrNull() ?: "normal")
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -209,14 +150,14 @@ private fun PokemonDetailContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(dimensionResource(R.dimen.header_height))
-                .background(finalHeaderColor),
+                .height(280.dp)
+                .background(headerColor),
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
                 model = pokemonDetail.pokemon.imageUrl,
                 contentDescription = pokemonDetail.pokemon.name,
-                modifier = Modifier.size(dimensionResource(R.dimen.detail_image_size))
+                modifier = Modifier.size(200.dp)
             )
         }
 
@@ -224,7 +165,15 @@ private fun PokemonDetailContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .background(Color(0xFF1A1A1A))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF2C3E50),
+                            Color(0xFF34495E),
+                            Color(0xFF1A252F)
+                        )
+                    )
+                )
         ) {
             Column(
                 modifier = Modifier
@@ -232,73 +181,122 @@ private fun PokemonDetailContent(
                     .verticalScroll(scrollState)
                     .padding(dimensionResource(R.dimen.content_padding))
             ) {
-                Text(
-                    text = pokemonDetail.pokemon.name.replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium))
-                ) {
-                    pokemonDetail.pokemon.types.forEach { type ->
-                        Surface(
-                            modifier = Modifier.clip(RoundedCornerShape(dimensionResource(R.dimen.type_corner_radius))),
-                            color = getTypeColor(type)
-                        ) {
-                            Text(
-                                text = type.replaceFirstChar { it.uppercase() },
-                                modifier = Modifier.padding(
-                                    horizontal = dimensionResource(R.dimen.type_padding_horizontal),
-                                    vertical = dimensionResource(R.dimen.type_padding_vertical)
-                                ),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color.White
-                            )
-                        }
-                    }
-                }
+                PokemonNameAndTypes(pokemon = pokemonDetail.pokemon)
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xlarge)))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    PhysicalAttributeItem(
-                        label = stringResource(R.string.weight),
-                        value = "${pokemonDetail.pokemon.weight / 10.0} kg"
-                    )
-                    PhysicalAttributeItem(
-                        label = stringResource(R.string.height),
-                        value = "${pokemonDetail.pokemon.height / 10.0} m"
-                    )
-                }
+                PhysicalAttributesRow(
+                    weight = pokemonDetail.pokemon.weight,
+                    height = pokemonDetail.pokemon.height
+                )
 
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_xlarge)))
 
-                Text(
-                    text = stringResource(R.string.base_stats),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
-
-                pokemonDetail.stats.forEach { stat ->
-                    StatItem(
-                        statName = stat.name.replaceFirstChar { it.uppercase() },
-                        value = stat.baseStat,
-                        maxValue = 150
-                    )
-                    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
-                }
+                StatsSection(stats = pokemonDetail.stats)
             }
         }
+    }
+}
+
+@Composable
+private fun ErrorContent(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = stringResource(R.string.error, error),
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
+            Button(onClick = onRetry) {
+                Text(stringResource(R.string.retry))
+            }
+        }
+    }
+}
+
+@Composable
+private fun PokemonNameAndTypes(
+    pokemon: com.ikiugu.oldmutual.domain.entity.Pokemon
+) {
+    Text(
+        text = pokemon.name.replaceFirstChar { it.uppercase() },
+        style = MaterialTheme.typography.headlineLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+    )
+
+    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.spacing_medium))
+    ) {
+        pokemon.types.forEach { type ->
+            Surface(
+                modifier = Modifier.clip(RoundedCornerShape(dimensionResource(R.dimen.type_corner_radius))),
+                color = getTypeColor(type)
+            ) {
+                Text(
+                    text = type.replaceFirstChar { it.uppercase() },
+                    modifier = Modifier.padding(
+                        horizontal = dimensionResource(R.dimen.type_padding_horizontal),
+                        vertical = dimensionResource(R.dimen.type_padding_vertical)
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhysicalAttributesRow(
+    weight: Int,
+    height: Int
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        PhysicalAttributeItem(
+            label = stringResource(R.string.weight),
+            value = "${weight / 10.0} kg"
+        )
+        PhysicalAttributeItem(
+            label = stringResource(R.string.height),
+            value = "${height / 10.0} m"
+        )
+    }
+}
+
+@Composable
+private fun StatsSection(
+    stats: List<com.ikiugu.oldmutual.domain.entity.PokemonStat>
+) {
+    Text(
+        text = stringResource(R.string.base_stats),
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+    )
+
+    Spacer(modifier = Modifier.height(dimensionResource(R.dimen.content_padding)))
+
+    stats.forEach { stat ->
+        StatItem(
+            statName = stat.name.replaceFirstChar { it.uppercase() },
+            value = stat.baseStat,
+            maxValue = 200
+        )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
     }
 }
 
