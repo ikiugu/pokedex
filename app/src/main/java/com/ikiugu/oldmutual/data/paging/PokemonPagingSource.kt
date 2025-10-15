@@ -7,6 +7,7 @@ import com.ikiugu.oldmutual.data.local.dao.PokemonDetailDao
 import com.ikiugu.oldmutual.data.local.entity.PokemonEntity
 import com.ikiugu.oldmutual.data.mapper.toDetail
 import com.ikiugu.oldmutual.data.mapper.toDetailEntity
+import com.ikiugu.oldmutual.data.mapper.toDomain
 import com.ikiugu.oldmutual.data.mapper.toEntity
 import com.ikiugu.oldmutual.data.remote.api.PokemonApiService
 import com.ikiugu.oldmutual.data.util.retryWithBackoff
@@ -21,10 +22,24 @@ class PokemonPagingSource @Inject constructor(
 ) : PagingSource<Int, Pokemon>() {
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Pokemon> {
+        val page = params.key ?: 0
+        val pageSize = params.loadSize.coerceAtMost(20)
+        
         return try {
-            val page = params.key ?: 0
-            val pageSize = params.loadSize.coerceAtMost(20)
+            // First, try to get cached data from local database
+            val cachedPokemon = getCachedPokemon(page, pageSize)
+            if (cachedPokemon.isNotEmpty()) {
+                Timber.d("Returning cached Pokemon data for page $page")
+                return LoadResult.Page(
+                    data = cachedPokemon,
+                    prevKey = if (page == 0) null else page - 1,
+                    nextKey = page + 1
+                )
+            }
+            
+            // If no cached data, try to fetch from API
             val response = retryWithBackoff {
+                Timber.d("Fetching Pokemon list from API - page: $page, pageSize: $pageSize")
                 apiService.getPokemonList(limit = pageSize, offset = page * pageSize)
             }
             
@@ -57,6 +72,7 @@ class PokemonPagingSource @Inject constructor(
                             pokemonDao.insertPokemon(basicPokemon.toEntity())
                         }
                     } catch (e: Exception) {
+                        Timber.w(e, "Failed to fetch Pokemon detail for id: $pokemonId")
                         val basicPokemon = Pokemon(
                             id = pokemonId,
                             name = result.name,
@@ -80,11 +96,38 @@ class PokemonPagingSource @Inject constructor(
                     nextKey = nextKey
                 )
             } else {
+                Timber.e("Failed to fetch Pokemon list from API")
                 LoadResult.Error(Exception("Failed to fetch Pokemon list"))
             }
             
         } catch (e: Exception) {
+            Timber.e(e, "Network error, trying to return cached data")
+            // If network fails, try to return any cached data we have
+            val fallbackPokemon = getCachedPokemon(0, pageSize)
+            if (fallbackPokemon.isNotEmpty()) {
+                Timber.d("Returning fallback cached Pokemon data")
+                return LoadResult.Page(
+                    data = fallbackPokemon,
+                    prevKey = null,
+                    nextKey = null
+                )
+            }
             LoadResult.Error(e)
+        }
+    }
+    
+    private suspend fun getCachedPokemon(page: Int, pageSize: Int): List<Pokemon> {
+        return try {
+            val offset = page * pageSize
+            val cachedEntities = pokemonDao.getPokemonPaginated(pageSize, offset)
+            
+            val paginatedPokemon = cachedEntities.map { it.toDomain() }
+            
+            Timber.d("Found ${paginatedPokemon.size} cached Pokemon for page $page")
+            paginatedPokemon
+        } catch (e: Exception) {
+            Timber.e(e, "Error getting cached Pokemon")
+            emptyList()
         }
     }
 

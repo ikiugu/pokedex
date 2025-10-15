@@ -1,24 +1,47 @@
 package com.ikiugu.oldmutual.presentation.ui.screen
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -30,7 +53,11 @@ import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonLoader
 import com.ikiugu.oldmutual.presentation.ui.utils.getTypeColor
 import com.ikiugu.oldmutual.presentation.ui.viewmodel.PokemonDetailViewModel
-import com.ikiugu.oldmutual.ui.theme.*
+import com.ikiugu.oldmutual.ui.theme.StatAttack
+import com.ikiugu.oldmutual.ui.theme.StatDefault
+import com.ikiugu.oldmutual.ui.theme.StatDefense
+import com.ikiugu.oldmutual.ui.theme.StatHp
+import com.ikiugu.oldmutual.ui.theme.StatSpeed
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -157,7 +184,10 @@ private fun PokemonDetailContent(
             AsyncImage(
                 model = pokemonDetail.pokemon.imageUrl,
                 contentDescription = pokemonDetail.pokemon.name,
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(200.dp),
+                placeholder = painterResource(id = R.drawable.ic_pokemon_black_and_white),
+                error = painterResource(id = R.drawable.ic_pokemon_black_and_white),
+                contentScale = ContentScale.Crop
             )
         }
 

@@ -9,6 +9,9 @@ interface PokemonDao {
     @Query("SELECT * FROM pokemon ORDER BY id ASC")
     fun getAllPokemon(): Flow<List<PokemonEntity>>
 
+    @Query("SELECT * FROM pokemon ORDER BY id ASC LIMIT :limit OFFSET :offset")
+    suspend fun getPokemonPaginated(limit: Int, offset: Int): List<PokemonEntity>
+
     @Query("SELECT * FROM pokemon WHERE id = :id")
     suspend fun getPokemonById(id: Int): PokemonEntity?
 

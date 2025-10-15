@@ -10,7 +10,6 @@ import com.ikiugu.oldmutual.data.mapper.toDetail
 import com.ikiugu.oldmutual.data.mapper.toDetailEntity
 import com.ikiugu.oldmutual.data.mapper.toDomain
 import com.ikiugu.oldmutual.data.mapper.toEntity
-import com.ikiugu.oldmutual.data.local.entity.PokemonEntity
 import com.ikiugu.oldmutual.data.paging.PokemonPagingSource
 import com.ikiugu.oldmutual.data.remote.api.PokemonApiService
 import com.ikiugu.oldmutual.data.util.retryWithBackoff
@@ -51,27 +50,48 @@ class PokemonRepositoryImpl @Inject constructor(
         emit(Result.Loading)
         
         try {
+            // First, try to get cached data
             val cachedDetail = pokemonDetailDao.getPokemonDetail(id)
             val cachedPokemon = pokemonDao.getPokemonById(id)
             
             if (cachedDetail != null && cachedPokemon != null) {
+                Timber.d("Returning cached Pokemon detail for id: $id")
                 emit(Result.Success(cachedDetail.toDomain(cachedPokemon.toDomain())))
+                return@flow
             }
             
-            val response = retryWithBackoff {
-                Timber.d("Fetching Pokémon detail from API - id: $id")
-                apiService.getPokemonDetail(id)
-            }
-            
-            if (response.isSuccessful && response.body() != null) {
-                val pokemonDetail = response.body()!!.toDetail()
+            // If no cached data, try to fetch from API
+            try {
+                val response = retryWithBackoff {
+                    Timber.d("Fetching Pokémon detail from API - id: $id")
+                    apiService.getPokemonDetail(id)
+                }
                 
-                pokemonDao.insertPokemon(pokemonDetail.pokemon.toEntity())
-                pokemonDetailDao.insertPokemonDetail(pokemonDetail.toDetailEntity())
-                
-                emit(Result.Success(pokemonDetail))
-            } else {
-                emit(Result.Error(PokemonError.NotFoundError))
+                if (response.isSuccessful && response.body() != null) {
+                    val pokemonDetail = response.body()!!.toDetail()
+                    
+                    pokemonDao.insertPokemon(pokemonDetail.pokemon.toEntity())
+                    pokemonDetailDao.insertPokemonDetail(pokemonDetail.toDetailEntity())
+                    
+                    emit(Result.Success(pokemonDetail))
+                } else {
+                    emit(Result.Error(PokemonError.NotFoundError))
+                }
+            } catch (networkError: Exception) {
+                Timber.w(networkError, "Network error fetching Pokemon detail for id: $id")
+                // If we have any cached data, return it even if incomplete
+                if (cachedPokemon != null) {
+                    val basicDetail = PokemonDetail(
+                        pokemon = cachedPokemon.toDomain(),
+                        stats = emptyList(),
+                        abilities = emptyList(),
+                        generation = "Unknown",
+                        captureRate = 0
+                    )
+                    emit(Result.Success(basicDetail))
+                } else {
+                    emit(Result.Error(networkError.toPokemonError()))
+                }
             }
             
         } catch (e: Exception) {
