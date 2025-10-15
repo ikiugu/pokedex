@@ -121,4 +121,4 @@ Each module contains its own unit tests:
 
 ---
 
-*Note: A single-module version of this application with Clean Architecture is available on the [feature/non-modular branch](https://github.com/ikiugu/pokedex/tree/feature/non-modular).*
+*Note: A single-module version of this application with Clean Architecture is available [here](https://github.com/ikiugu/pokedex/tree/feature/non-modular).*
