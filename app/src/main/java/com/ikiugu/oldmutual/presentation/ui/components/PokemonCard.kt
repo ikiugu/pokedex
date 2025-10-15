@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -20,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.domain.entity.Pokemon
+import com.ikiugu.oldmutual.presentation.ui.utils.getCardPadding
+import com.ikiugu.oldmutual.presentation.ui.utils.getImageSize
 import com.ikiugu.oldmutual.presentation.ui.utils.getTypeColor
 import com.ikiugu.oldmutual.ui.theme.*
 
@@ -30,6 +33,12 @@ fun PokemonCard(
     onClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    
+    val imageSize = getImageSize(configuration)
+    val cardPadding = getCardPadding(configuration)
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -43,21 +52,23 @@ fun PokemonCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dimensionResource(R.dimen.card_padding)),
+                .padding(cardPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
                 model = pokemon.imageUrl,
                 contentDescription = pokemon.name,
                 modifier = Modifier
-                    .size(dimensionResource(R.dimen.pokemon_image_size))
+                    .size(imageSize)
                     .clip(RoundedCornerShape(dimensionResource(R.dimen.image_corner_radius))),
                 placeholder = painterResource(id = R.drawable.ic_pokemon_black_and_white),
                 error = painterResource(id = R.drawable.ic_pokemon_black_and_white),
                 contentScale = ContentScale.Crop
             )
             
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_medium)))
+            val textSpacing = if (isLandscape) 4.dp else 8.dp
+            
+            Spacer(modifier = Modifier.height(textSpacing))
             
             Text(
                 text = pokemon.name.replaceFirstChar { it.uppercase() },
@@ -68,7 +79,7 @@ fun PokemonCard(
             )
             
             if (pokemon.types.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.spacing_small)))
+                Spacer(modifier = Modifier.height(textSpacing / 2))
                 
                 Text(
                     text = pokemon.types.first().replaceFirstChar { it.uppercase() },

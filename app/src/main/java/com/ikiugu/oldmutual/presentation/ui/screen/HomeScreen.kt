@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,9 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -24,10 +23,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +45,10 @@ import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.domain.entity.Pokemon
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonCard
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonLoader
+import com.ikiugu.oldmutual.presentation.ui.utils.getContentPadding
+import com.ikiugu.oldmutual.presentation.ui.utils.getGridColumns
+import com.ikiugu.oldmutual.presentation.ui.utils.getGridColumnsSpanCount
+import com.ikiugu.oldmutual.presentation.ui.utils.getGridSpacing
 import com.ikiugu.oldmutual.presentation.ui.viewmodel.HomeViewModel
 import com.ikiugu.oldmutual.ui.theme.TypeElectric
 
@@ -50,8 +59,18 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    val configuration = LocalConfiguration.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pokemonPagingItems: LazyPagingItems<Pokemon> = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
+
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var scrollPosition by rememberSaveable { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        if (uiState.searchQuery.isNotEmpty()) {
+            searchQuery = uiState.searchQuery
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -64,19 +83,22 @@ fun HomeScreen(
                 )
             }
         )
-        
+
         OutlinedTextField(
-            value = uiState.searchQuery,
-            onValueChange = viewModel::onSearchQueryChanged,
+            value = searchQuery,
+            onValueChange = { newValue ->
+                searchQuery = newValue
+                viewModel.onSearchQueryChanged(newValue)
+            },
             label = { Text(stringResource(R.string.search_pokemon)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(dimensionResource(R.dimen.content_padding)),
             singleLine = true
         )
-        
+
         when {
-            uiState.searchQuery.isNotBlank() -> {
+            searchQuery.isNotBlank() -> {
                 if (uiState.isLoading && uiState.searchResults.isEmpty()) {
                     PokemonLoader(
                         message = stringResource(R.string.searching_pokemon)
@@ -89,7 +111,9 @@ fun HomeScreen(
                 } else {
                     SearchResultsGrid(
                         results = uiState.searchResults,
-                        onPokemonClick = onPokemonClick
+                        onPokemonClick = onPokemonClick,
+                        scrollPosition = scrollPosition,
+                        onScrollPositionChanged = { scrollPosition = it }
                     )
                 }
             }
@@ -101,16 +125,20 @@ fun HomeScreen(
                             message = stringResource(R.string.loading_pokemon)
                         )
                     }
+
                     is LoadState.Error -> {
                         SearchErrorContent(
                             error = stringResource(R.string.failed_to_load_pokemon_list),
                             onRetry = { pokemonPagingItems.retry() }
                         )
                     }
+
                     else -> {
                         PagedPokemonGrid(
                             pokemonPagingItems = pokemonPagingItems,
-                            onPokemonClick = onPokemonClick
+                            onPokemonClick = onPokemonClick,
+                            scrollPosition = scrollPosition,
+                            onScrollPositionChanged = { scrollPosition = it }
                         )
                     }
                 }
@@ -146,13 +174,25 @@ private fun SearchErrorContent(
 @Composable
 private fun SearchResultsGrid(
     results: List<Pokemon>,
-    onPokemonClick: (Int) -> Unit
+    onPokemonClick: (Int) -> Unit,
+    scrollPosition: Int,
+    onScrollPositionChanged: (Int) -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val gridSpacing = getGridSpacing(configuration)
+    val contentPadding = getContentPadding(configuration)
+    val gridState = rememberLazyGridState(scrollPosition)
+
+    LaunchedEffect(gridState.firstVisibleItemIndex) {
+        onScrollPositionChanged(gridState.firstVisibleItemIndex)
+    }
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(dimensionResource(R.dimen.content_padding)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding)),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding))
+        columns = getGridColumns(configuration),
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(gridSpacing),
+        horizontalArrangement = Arrangement.spacedBy(gridSpacing),
+        state = gridState
     ) {
         items(results.size) { index ->
             val pokemon = results[index]
@@ -167,13 +207,26 @@ private fun SearchResultsGrid(
 @Composable
 private fun PagedPokemonGrid(
     pokemonPagingItems: LazyPagingItems<Pokemon>,
-    onPokemonClick: (Int) -> Unit
+    onPokemonClick: (Int) -> Unit,
+    scrollPosition: Int,
+    onScrollPositionChanged: (Int) -> Unit
 ) {
+    val configuration = LocalConfiguration.current
+    val gridSpacing = getGridSpacing(configuration)
+    val contentPadding = getContentPadding(configuration)
+    val spanCount = getGridColumnsSpanCount(configuration)
+    val gridState = rememberLazyGridState(scrollPosition)
+
+    LaunchedEffect(gridState.firstVisibleItemIndex) {
+        onScrollPositionChanged(gridState.firstVisibleItemIndex)
+    }
+
     LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(dimensionResource(R.dimen.content_padding)),
-        verticalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding)),
-        horizontalArrangement = Arrangement.spacedBy(dimensionResource(R.dimen.content_padding))
+        columns = getGridColumns(configuration),
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(gridSpacing),
+        horizontalArrangement = Arrangement.spacedBy(gridSpacing),
+        state = gridState
     ) {
         items(
             count = pokemonPagingItems.itemCount,
@@ -189,10 +242,10 @@ private fun PagedPokemonGrid(
                 LoadingPlaceholder()
             }
         }
-        
+
         when (pokemonPagingItems.loadState.append) {
             is LoadState.Loading -> {
-                item(span = { GridItemSpan(2) }) {
+                item(span = { GridItemSpan(spanCount) }) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -203,8 +256,9 @@ private fun PagedPokemonGrid(
                     }
                 }
             }
+
             is LoadState.Error -> {
-                item(span = { GridItemSpan(2) }) {
+                item(span = { GridItemSpan(spanCount) }) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -222,6 +276,7 @@ private fun PagedPokemonGrid(
                     }
                 }
             }
+
             else -> {}
         }
     }
@@ -239,9 +294,9 @@ private fun LoadingPlaceholder() {
             ),
         contentAlignment = Alignment.Center
     ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(dimensionResource(R.dimen.placeholder_icon_size)),
-                color = TypeElectric
-            )
+        CircularProgressIndicator(
+            modifier = Modifier.size(dimensionResource(R.dimen.placeholder_icon_size)),
+            color = TypeElectric
+        )
     }
 }

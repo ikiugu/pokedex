@@ -32,6 +32,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -51,6 +55,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.presentation.ui.components.PokemonLoader
+import com.ikiugu.oldmutual.presentation.ui.utils.getContentPadding
+import com.ikiugu.oldmutual.presentation.ui.utils.getImageSize
 import com.ikiugu.oldmutual.presentation.ui.utils.getTypeColor
 import com.ikiugu.oldmutual.presentation.ui.viewmodel.PokemonDetailViewModel
 import com.ikiugu.oldmutual.ui.theme.StatAttack
@@ -69,6 +75,7 @@ fun PokemonDetailScreen(
     viewModel: PokemonDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var scrollPosition by rememberSaveable { mutableIntStateOf(0) }
 
     val view = LocalView.current
     DisposableEffect(Unit) {
@@ -156,6 +163,8 @@ fun PokemonDetailScreen(
                 PokemonDetailContent(
                     pokemonDetail = uiState.pokemonDetail!!,
                     headerColor = headerColor,
+                    scrollPosition = scrollPosition,
+                    onScrollPositionChanged = { scrollPosition = it },
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -167,9 +176,20 @@ fun PokemonDetailScreen(
 private fun PokemonDetailContent(
     pokemonDetail: com.ikiugu.oldmutual.domain.entity.PokemonDetail,
     headerColor: Color,
+    scrollPosition: Int,
+    onScrollPositionChanged: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val scrollState = rememberScrollState()
+    val scrollState = rememberScrollState(scrollPosition)
+    
+    LaunchedEffect(scrollState.value) {
+        onScrollPositionChanged(scrollState.value)
+    }
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
+    val imageSize = getImageSize(configuration) * if (isLandscape) 2.5f else 3.5f
+    val headerHeight = if (isLandscape) 200.dp else dimensionResource(R.dimen.carousel_height)
 
     Column(
         modifier = modifier.fillMaxSize()
@@ -177,14 +197,14 @@ private fun PokemonDetailContent(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(dimensionResource(R.dimen.carousel_height))
+                .height(headerHeight)
                 .background(headerColor),
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
                 model = pokemonDetail.pokemon.imageUrl,
                 contentDescription = pokemonDetail.pokemon.name,
-                modifier = Modifier.size(200.dp),
+                modifier = Modifier.size(imageSize),
                 placeholder = painterResource(id = R.drawable.ic_pokemon_black_and_white),
                 error = painterResource(id = R.drawable.ic_pokemon_black_and_white),
                 contentScale = ContentScale.Crop
@@ -209,7 +229,7 @@ private fun PokemonDetailContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(scrollState)
-                    .padding(dimensionResource(R.dimen.content_padding))
+                    .padding(getContentPadding(configuration))
             ) {
                 PokemonNameAndTypes(pokemon = pokemonDetail.pokemon)
 
