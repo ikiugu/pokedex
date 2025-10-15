@@ -1,4 +1,4 @@
-# Pokedex
+# Pokédex
 
 A modern Android application demonstrating a clean, scalable architecture for browsing Pokémon data.
 
