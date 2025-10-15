@@ -10,6 +10,7 @@ import com.ikiugu.pokedex.data.mapper.toDetailEntity
 import com.ikiugu.pokedex.data.mapper.toDomain
 import com.ikiugu.pokedex.data.mapper.toEntity
 import com.ikiugu.pokedex.data.remote.api.PokemonApiService
+import com.ikiugu.pokedex.data.remote.api.ImageUrlBuilder
 import com.ikiugu.pokedex.data.util.retryWithBackoff
 import com.ikiugu.pokedex.domain.entity.Pokemon
 import timber.log.Timber
@@ -26,8 +27,7 @@ class PokemonPagingSource @Inject constructor(
         val pageSize = params.loadSize.coerceAtMost(20)
         
         return try {
-            // First, try to get cached data from local database
-            val cachedPokemon = getCachedPokemon(page, pageSize)
+                val cachedPokemon = getCachedPokemon(page, pageSize)
             if (cachedPokemon.isNotEmpty()) {
                 Timber.d("Returning cached Pokemon data for page $page")
                 return LoadResult.Page(
@@ -37,7 +37,6 @@ class PokemonPagingSource @Inject constructor(
                 )
             }
             
-            // If no cached data, try to fetch from API
             val response = retryWithBackoff {
                 Timber.d("Fetching Pokemon list from API - page: $page, pageSize: $pageSize")
                 apiService.getPokemonList(limit = pageSize, offset = page * pageSize)
@@ -61,7 +60,7 @@ class PokemonPagingSource @Inject constructor(
                             val basicPokemon = Pokemon(
                                 id = pokemonId,
                                 name = result.name,
-                                imageUrl = buildImageUrl(pokemonId),
+                                imageUrl = ImageUrlBuilder.officialArtwork(pokemonId),
                                 types = emptyList(),
                                 baseExperience = 0,
                                 height = 0,
@@ -76,7 +75,7 @@ class PokemonPagingSource @Inject constructor(
                         val basicPokemon = Pokemon(
                             id = pokemonId,
                             name = result.name,
-                            imageUrl = buildImageUrl(pokemonId),
+                            imageUrl = ImageUrlBuilder.officialArtwork(pokemonId),
                             types = emptyList(),
                             baseExperience = 0,
                             height = 0,
@@ -102,7 +101,6 @@ class PokemonPagingSource @Inject constructor(
             
         } catch (e: Exception) {
             Timber.e(e, "Network error, trying to return cached data")
-            // If network fails, try to return any cached data we have
             val fallbackPokemon = getCachedPokemon(0, pageSize)
             if (fallbackPokemon.isNotEmpty()) {
                 Timber.d("Returning fallback cached Pokemon data")
@@ -138,7 +136,5 @@ class PokemonPagingSource @Inject constructor(
         }
     }
     
-    private fun buildImageUrl(id: Int): String {
-        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
-    }
+    // image url building centralized in ImageUrlBuilder
 }
