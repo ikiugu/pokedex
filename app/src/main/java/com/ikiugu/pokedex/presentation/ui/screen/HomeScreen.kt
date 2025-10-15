@@ -52,6 +52,7 @@ import com.ikiugu.pokedex.presentation.ui.utils.getGridColumnsSpanCount
 import com.ikiugu.pokedex.presentation.ui.utils.getGridSpacing
 import com.ikiugu.pokedex.presentation.ui.viewmodel.HomeViewModel
 import com.ikiugu.pokedex.ui.theme.TypeElectric
+import com.ikiugu.pokedex.ui.theme.PokemonCardContainer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -291,7 +292,7 @@ private fun LoadingPlaceholder() {
             .fillMaxWidth()
             .aspectRatio(1f)
             .background(
-                Color(0xFFF5F5F5),
+                PokemonCardContainer,
                 RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius))
             ),
         contentAlignment = Alignment.Center
