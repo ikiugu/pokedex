@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OldMutual"
+rootProject.name = "Pokedex"
 include(":app")

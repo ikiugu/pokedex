@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">OldMutual</string>
+    <string name="app_name">Pokédex</string>
     <string name="pokedex">Pokédex</string>
     <string name="search_pokemon">Search Pokémon</string>
     <string name="error">Error: %s</string>

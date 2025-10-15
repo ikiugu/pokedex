@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.ikiugu.oldmutual"
+    namespace = "com.ikiugu.pokedex"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.ikiugu.oldmutual"
+        applicationId = "com.ikiugu.pokedex"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
