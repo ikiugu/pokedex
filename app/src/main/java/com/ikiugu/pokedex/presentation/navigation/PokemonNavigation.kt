@@ -19,21 +19,21 @@ fun PokemonNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "home_screen"
+        startDestination = PokemonDestinations.Home.route
     ) {
-        composable("home_screen") {
+        composable(PokemonDestinations.Home.route) {
             HomeScreen(
                 onPokemonClick = { pokemonId ->
-                    navController.navigate("pokemon_detail_screen/$pokemonId")
+                    navController.navigate(PokemonDestinations.Detail.createRoute(pokemonId))
                 }
             )
         }
         
         composable(
-            "pokemon_detail_screen/{pokemonId}",
-            arguments = listOf(navArgument("pokemonId") { type = NavType.IntType })
+            PokemonDestinations.Detail.route,
+            arguments = listOf(navArgument(PokemonDestinations.Detail.ARG_POKEMON_ID) { type = NavType.IntType })
         ) { backStackEntry ->
-            val pokemonId = backStackEntry.arguments?.getInt("pokemonId") ?: 0
+            val pokemonId = backStackEntry.arguments?.getInt(PokemonDestinations.Detail.ARG_POKEMON_ID) ?: 0
             PokemonDetailScreen(
                 pokemonId = pokemonId,
                 onBackClick = {
