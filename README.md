@@ -1,86 +1,77 @@
 # Pokedex
 
-A modern Android application showcasing Pokemon data using Jetpack Compose and Clean Architecture principles.
+A modern Android application demonstrating a clean, scalable architecture for browsing Pokémon data.
 
-## Architecture
+## Screenshots
 
-This project follows Clean Architecture with a modular approach:
-
-- **app**: Presentation layer containing UI components, ViewModels, and navigation
-- **domain**: Business logic layer with entities, use cases, and repository interfaces
-- **data**: Data layer implementing repositories, local database, and remote API integration
-
-## Project Structure
-
-```
-├── app/                 # Presentation layer
-│   ├── src/main/java/com/ikiugu/pokedex/
-│   │   ├── presentation/    # UI components, ViewModels
-│   │   └── di/             # Dependency injection setup
-├── domain/             # Business logic layer
-│   └── src/main/java/com/ikiugu/pokedex/domain/
-│       ├── entity/         # Domain models
-│       ├── repository/     # Repository interfaces
-│       └── usecase/        # Business logic use cases
-└── data/               # Data layer
-    └── src/main/java/com/ikiugu/pokedex/data/
-        ├── local/          # Room database
-        ├── remote/         # API services
-        ├── repository/     # Repository implementations
-        └── di/             # Data layer DI modules
-```
-
-## Technology Stack
-
-- **UI**: Jetpack Compose
-- **Architecture**: MVVM with Clean Architecture
-- **Dependency Injection**: Hilt
-- **Database**: Room
-- **Networking**: Retrofit + OkHttp
-- **Async Operations**: Kotlin Coroutines + Flow
-- **Image Loading**: Coil
-- **Navigation**: Navigation Compose
-- **Paging**: AndroidX Paging 3
-- **Testing**: JUnit, Mockito, Coroutines Test
+| Home | Search | Detail |
+|------|--------|--------|
+| ![Home](docs/screenshots/home.png) | ![Search](docs/screenshots/search.png) | ![Detail](docs/screenshots/detail.png) |
 
 ## Features
 
-- Browse Pokemon list with pagination
-- Search Pokemon by name
-- View detailed Pokemon information
-- Offline-first approach with local caching
-- Material Design 3 UI
+- Browse Pokémon list with pagination
+- Search Pokémon by name
+- View Pokémon details (stats, abilities, artwork)
+- Offline-first with Room caching
+- Material Design 3 UI with theme tokens
 
-## Build Performance
+## Tech Stack
 
-The project is optimized for fast builds with modular architecture and performance-focused Gradle configuration including:
+- Jetpack Compose (UI)
+- Hilt (DI)
+- Room (Local DB)
+- Retrofit + OkHttp (Networking)
+- Coroutines + Flow (Concurrency)
+- Paging 3 (Pagination)
+- Coil (Images)
+- JUnit, Mockito, Coroutines Test (Testing)
 
-- Configuration caching
-- Build caching
-- Parallel execution
-- Incremental compilation
-- R8 optimization
+## Architecture & Modules
+
+Clean Architecture with clear boundaries:
+
+- `app` – presentation (Compose UI, ViewModels, navigation)
+- `domain` – business logic (entities, use cases, repository interfaces)
+- `data` – data sources (Retrofit, Room), mappers, repository implementations
+
+```
+UI (app)  →  UseCases (domain)  →  Repositories (data)
+           ←        Models (domain)       ←  DTO/Entities (data)
+```
+
+### Project Structure
+
+```
+├── app/
+│   └── src/main/java/com/ikiugu/pokedex/
+│       ├── presentation/      # UI + ViewModels
+│       └── navigation/        # Typed routes
+├── domain/
+│   └── src/main/java/com/ikiugu/pokedex/domain/
+│       ├── entity/            # Domain models
+│       ├── repository/        # Interfaces
+│       └── usecase/           # Business logic
+└── data/
+    └── src/main/java/com/ikiugu/pokedex/data/
+        ├── remote/            # API + DTOs + ImageUrlBuilder
+        ├── local/             # Room DB/DAO/entities
+        ├── repository/        # Impl
+        └── di/                # Data DI
+```
 
 ## Requirements
 
-- Android Studio Arctic Fox or later
+- Android Studio (Giraffe+ recommended)
 - JDK 17
-- Android SDK 24+
+- minSdk 24, targetSdk 36
 
-## API
+## Setup & API
 
-This application consumes the [Pokemon API](https://pokeapi.co/) for fetching Pokemon data.
+This app uses the public [PokeAPI](https://pokeapi.co/). No keys required.
 
-## Getting Started
+## Build & Run
 
-1. Clone the repository
-2. Open in Android Studio
-3. Sync Gradle files
-4. Run the application
-
-## Development
-
-### Building
 ```bash
 # Debug build
 ./gradlew assembleDebug
@@ -92,33 +83,41 @@ This application consumes the [Pokemon API](https://pokeapi.co/) for fetching Po
 ./gradlew clean
 ```
 
-### Testing
+## Testing
+
 ```bash
-# Run all tests
+# All tests
 ./gradlew test
 
-# Run specific module tests
+# Per module
 ./gradlew :domain:test
 ./gradlew :data:test
 ./gradlew :app:test
 ```
 
-## Testing
+Each module hosts its own tests:
 
-Each module contains its own unit tests:
-- Domain tests: Use case validation and business logic
-- Data tests: Repository implementation and data mapping
-- App tests: ViewModel behavior and UI logic
+- Domain: use case validation and business rules
+- Data: repository behavior, mappers
+- App: ViewModel logic
 
-## Implementation Highlights
+## Performance
 
-- **Modular Architecture**: Clean separation between presentation, domain, and data layers
-- **Dependency Injection**: Hilt for managing dependencies across modules
-- **Offline-First**: Room database with network data synchronization
-- **Reactive UI**: Jetpack Compose with ViewModel state management
-- **Error Handling**: Comprehensive error handling with Result wrapper
-- **Performance**: Optimized Gradle configuration for fast builds
+The project includes Gradle optimizations to reduce build times:
+
+- Configuration cache, build cache, and parallel execution
+- Incremental KSP/KAPT and Kotlin compilation
+- Non-transitive R classes and R8 optimizations
+
+## Highlights
+
+- Typed navigation routes (no stringly-typed paths)
+- Theme tokens and Dimens for consistent styling (no magic numbers)
+- SnapshotFlow for scroll-based effects (avoids LaunchedEffect restarts)
+- Centralized ImageUrlBuilder for official artwork URLs
+- Extracted DB name and optional SQLCipher hook
 
 ---
 
-*Note: A single-module version of this application with Clean Architecture is available [here](https://github.com/ikiugu/pokedex/tree/feature/non-modular).*
+Note: A single-module variant with Clean Architecture is available on the
+[feature/non-modular branch](https://github.com/ikiugu/pokedex/tree/feature/non-modular).
