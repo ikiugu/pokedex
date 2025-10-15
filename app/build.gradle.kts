@@ -74,6 +74,9 @@ dependencies {
     // Paging
     implementation(libs.androidx.paging.compose)
     
+    // Coroutines (snapshotFlow used in UI)
+    implementation(libs.kotlinx.coroutines.core)
+    
     // Testing (only for presentation/viewmodel tests)
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)

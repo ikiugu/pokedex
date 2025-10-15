@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,7 +60,6 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val configuration = LocalConfiguration.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pokemonPagingItems: LazyPagingItems<Pokemon> = viewModel.pokemonPagingFlow.collectAsLazyPagingItems()
 
@@ -183,8 +183,9 @@ private fun SearchResultsGrid(
     val contentPadding = getContentPadding(configuration)
     val gridState = rememberLazyGridState(scrollPosition)
 
-    LaunchedEffect(gridState.firstVisibleItemIndex) {
-        onScrollPositionChanged(gridState.firstVisibleItemIndex)
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.firstVisibleItemIndex }
+            .collect { onScrollPositionChanged(it) }
     }
 
     LazyVerticalGrid(
@@ -194,7 +195,7 @@ private fun SearchResultsGrid(
         horizontalArrangement = Arrangement.spacedBy(gridSpacing),
         state = gridState
     ) {
-        items(results.size) { index ->
+        items(count = results.size, key = { index -> results[index].id }) { index ->
             val pokemon = results[index]
             PokemonCard(
                 pokemon = pokemon,
@@ -217,8 +218,9 @@ private fun PagedPokemonGrid(
     val spanCount = getGridColumnsSpanCount(configuration)
     val gridState = rememberLazyGridState(scrollPosition)
 
-    LaunchedEffect(gridState.firstVisibleItemIndex) {
-        onScrollPositionChanged(gridState.firstVisibleItemIndex)
+    LaunchedEffect(gridState) {
+        snapshotFlow { gridState.firstVisibleItemIndex }
+            .collect { onScrollPositionChanged(it) }
     }
 
     LazyVerticalGrid(
