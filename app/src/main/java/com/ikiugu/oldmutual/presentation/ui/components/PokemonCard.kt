@@ -18,31 +18,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.ikiugu.oldmutual.R
 import com.ikiugu.oldmutual.domain.entity.Pokemon
+import com.ikiugu.oldmutual.presentation.ui.utils.getTypeColor
 import com.ikiugu.oldmutual.ui.theme.*
 
-private fun getTypeColor(type: String): Color {
-    return when (type.lowercase()) {
-        "normal" -> TypeNormal
-        "fire" -> TypeFire
-        "water" -> TypeWater
-        "electric" -> TypeElectric
-        "grass" -> TypeGrass
-        "ice" -> TypeIce
-        "fighting" -> TypeFighting
-        "poison" -> TypePoison
-        "ground" -> TypeGround
-        "flying" -> TypeFlying
-        "psychic" -> TypePsychic
-        "bug" -> TypeBug
-        "rock" -> TypeRock
-        "ghost" -> TypeGhost
-        "dragon" -> TypeDragon
-        "dark" -> TypeDark
-        "steel" -> TypeSteel
-        "fairy" -> TypeFairy
-        else -> TypeNormal
-    }
-}
 
 @Composable
 fun PokemonCard(

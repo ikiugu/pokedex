@@ -41,10 +41,8 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(searchQuery = query) }
         
         if (query.isBlank()) {
-            // Clear search results and show paged list
             _uiState.update { it.copy(searchResults = emptyList()) }
         } else {
-            // Perform search
             viewModelScope.launch {
                 searchPokemonUseCase(query)
                     .catch { error ->

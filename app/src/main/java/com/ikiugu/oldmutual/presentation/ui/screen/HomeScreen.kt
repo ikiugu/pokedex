@@ -79,10 +79,25 @@ fun HomeScreen(
             }
 
             else -> {
-                PagedPokemonGrid(
-                    pokemonPagingItems = pokemonPagingItems,
-                    onPokemonClick = onPokemonClick
-                )
+                when (pokemonPagingItems.loadState.refresh) {
+                    is LoadState.Loading -> {
+                        PokemonLoader(
+                            message = "Loading Pokémon..."
+                        )
+                    }
+                    is LoadState.Error -> {
+                        SearchErrorContent(
+                            error = "Failed to load Pokémon list",
+                            onRetry = { pokemonPagingItems.retry() }
+                        )
+                    }
+                    else -> {
+                        PagedPokemonGrid(
+                            pokemonPagingItems = pokemonPagingItems,
+                            onPokemonClick = onPokemonClick
+                        )
+                    }
+                }
             }
         }
     }

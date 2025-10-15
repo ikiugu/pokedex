@@ -4,9 +4,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.ikiugu.oldmutual.presentation.ui.screen.HomeScreen
 import com.ikiugu.oldmutual.presentation.ui.screen.PokemonDetailScreen
 
@@ -17,18 +19,21 @@ fun PokemonNavigation(
 ) {
     NavHost(
         navController = navController,
-        startDestination = "home"
+        startDestination = "home_screen"
     ) {
-        composable("home") {
+        composable("home_screen") {
             HomeScreen(
                 onPokemonClick = { pokemonId ->
-                    navController.navigate("detail/$pokemonId")
+                    navController.navigate("pokemon_detail_screen/$pokemonId")
                 }
             )
         }
         
-        composable("detail/{pokemonId}") { backStackEntry ->
-            val pokemonId = backStackEntry.arguments?.getString("pokemonId")?.toIntOrNull() ?: 0
+        composable(
+            "pokemon_detail_screen/{pokemonId}",
+            arguments = listOf(navArgument("pokemonId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val pokemonId = backStackEntry.arguments?.getInt("pokemonId") ?: 0
             PokemonDetailScreen(
                 pokemonId = pokemonId,
                 onBackClick = {

@@ -23,19 +23,13 @@ class PokemonPagingSource @Inject constructor(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Pokemon> {
         return try {
             val page = params.key ?: 0
-            val pageSize = params.loadSize.coerceAtMost(20) // Load max 20 items per page
-            
-            Timber.d("Loading Pokemon page: $page, size: $pageSize")
-            
-            // Fetch Pokemon list from API
+            val pageSize = params.loadSize.coerceAtMost(20)
             val response = retryWithBackoff {
                 apiService.getPokemonList(limit = pageSize, offset = page * pageSize)
             }
             
             if (response.isSuccessful && response.body() != null) {
                 val pokemonList = mutableListOf<Pokemon>()
-                
-                // Fetch detailed info for each Pokemon
                 response.body()!!.results.forEachIndexed { index, result ->
                     val pokemonId = page * pageSize + index + 1
                     try {
@@ -46,12 +40,9 @@ class PokemonPagingSource @Inject constructor(
                         if (detailResponse.isSuccessful && detailResponse.body() != null) {
                             val pokemonDetail = detailResponse.body()!!.toDetail()
                             pokemonList.add(pokemonDetail.pokemon)
-                            
-                            // Save to database
                             pokemonDao.insertPokemon(pokemonDetail.pokemon.toEntity())
                             pokemonDetailDao.insertPokemonDetail(pokemonDetail.toDetailEntity())
                         } else {
-                            // Fallback to basic info if detail fetch fails
                             val basicPokemon = Pokemon(
                                 id = pokemonId,
                                 name = result.name,
@@ -66,8 +57,6 @@ class PokemonPagingSource @Inject constructor(
                             pokemonDao.insertPokemon(basicPokemon.toEntity())
                         }
                     } catch (e: Exception) {
-                        Timber.w(e, "Failed to fetch detail for Pokemon $pokemonId")
-                        // Fallback to basic info
                         val basicPokemon = Pokemon(
                             id = pokemonId,
                             name = result.name,
@@ -95,7 +84,6 @@ class PokemonPagingSource @Inject constructor(
             }
             
         } catch (e: Exception) {
-            Timber.e(e, "Error loading Pokemon page")
             LoadResult.Error(e)
         }
     }
