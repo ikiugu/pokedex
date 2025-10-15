@@ -22,7 +22,10 @@ import com.ikiugu.pokedex.R
 import com.ikiugu.pokedex.domain.entity.Pokemon
 import com.ikiugu.pokedex.presentation.ui.utils.getCardPadding
 import com.ikiugu.pokedex.presentation.ui.utils.getImageSize
-import com.ikiugu.pokedex.ui.theme.*
+import com.ikiugu.pokedex.ui.theme.PokemonCardContainer
+import com.ikiugu.pokedex.ui.theme.PokedexTheme
+import com.ikiugu.pokedex.ui.theme.TypeElectric
+import com.ikiugu.pokedex.ui.theme.TypeGrass
 
 
 @Composable
@@ -44,7 +47,7 @@ fun PokemonCard(
         shape = RoundedCornerShape(dimensionResource(R.dimen.card_corner_radius)),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF5F5F5)
+            containerColor = PokemonCardContainer
         )
     ) {
         Column(
@@ -64,7 +67,7 @@ fun PokemonCard(
                 contentScale = ContentScale.Crop
             )
             
-            val textSpacing = if (isLandscape) 4.dp else 8.dp
+            val textSpacing = if (isLandscape) dimensionResource(R.dimen.spacing_small) else dimensionResource(R.dimen.spacing_medium)
             
             Spacer(modifier = Modifier.height(textSpacing))
             

@@ -11,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ikiugu.pokedex.R
+import com.ikiugu.pokedex.ui.theme.Anim
 import com.ikiugu.pokedex.ui.theme.TypeElectric
 
 @Composable
@@ -24,7 +25,7 @@ fun PokemonLoader(
         initialValue = 0.8f,
         targetValue = 1.2f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = EaseInOut),
+            animation = tween(Anim.Long, easing = EaseInOut),
             repeatMode = RepeatMode.Reverse
         ),
         label = "scale"

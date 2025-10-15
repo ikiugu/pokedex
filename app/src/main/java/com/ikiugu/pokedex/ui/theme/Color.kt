@@ -18,6 +18,14 @@ val StatDefense = Color(0xFF64B5F6)
 val StatSpeed = Color(0xFF81C784)
 val StatDefault = Color(0xFFBDBDBD)
 
+// Detail screen gradient
+val DetailGradientTop = Color(0xFF2C3E50)
+val DetailGradientMid = Color(0xFF34495E)
+val DetailGradientBottom = Color(0xFF1A252F)
+
+// Card surfaces
+val PokemonCardContainer = Color(0xFFF5F5F5)
+
 // Pokemon Type Colors
 val TypeNormal = Color(0xFFA8A878)
 val TypeFire = Color(0xFFF08030)

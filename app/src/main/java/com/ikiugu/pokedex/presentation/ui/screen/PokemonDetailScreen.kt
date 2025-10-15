@@ -61,6 +61,9 @@ import com.ikiugu.pokedex.presentation.ui.utils.getImageSize
 import com.ikiugu.pokedex.presentation.ui.utils.getTypeColor
 import com.ikiugu.pokedex.presentation.ui.viewmodel.PokemonDetailViewModel
 import com.ikiugu.pokedex.ui.theme.Dimens
+import com.ikiugu.pokedex.ui.theme.DetailGradientBottom
+import com.ikiugu.pokedex.ui.theme.DetailGradientMid
+import com.ikiugu.pokedex.ui.theme.DetailGradientTop
 import com.ikiugu.pokedex.ui.theme.StatAttack
 import com.ikiugu.pokedex.ui.theme.StatDefault
 import com.ikiugu.pokedex.ui.theme.StatDefense
@@ -221,9 +224,9 @@ private fun PokemonDetailContent(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.surfaceVariant
+                            DetailGradientTop,
+                            DetailGradientMid,
+                            DetailGradientBottom
                         )
                     )
                 )

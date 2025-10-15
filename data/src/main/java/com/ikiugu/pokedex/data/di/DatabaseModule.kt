@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.ikiugu.pokedex.data.local.dao.PokemonDao
 import com.ikiugu.pokedex.data.local.dao.PokemonDetailDao
 import com.ikiugu.pokedex.data.local.database.PokemonDatabase
+import com.ikiugu.pokedex.data.local.database.DbConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,10 +20,15 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun providePokemonDatabase(@ApplicationContext context: Context): PokemonDatabase {
+        // Optional SQLCipher hook:
+        // val passphrase = SQLiteDatabase.getBytes("your-secure-passphrase".toCharArray())
+        // val factory = SupportFactory(passphrase)
+        // .openHelperFactory(factory)
+
         return Room.databaseBuilder(
             context,
             PokemonDatabase::class.java,
-            "pokemon_database"
+            DbConfig.NAME
         ).build()
     }
 
