@@ -7,6 +7,7 @@ import com.ikiugu.pokedex.domain.entity.Pokemon
 import com.ikiugu.pokedex.domain.entity.PokemonDetail
 import com.ikiugu.pokedex.domain.entity.PokemonStat
 import com.ikiugu.pokedex.domain.entity.Ability
+import com.ikiugu.pokedex.data.remote.api.ImageUrlBuilder
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -27,7 +28,7 @@ fun PokemonResponse.toDomain(): Pokemon {
     return Pokemon(
         id = id,
         name = name,
-        imageUrl = buildImageUrl(id),
+        imageUrl = ImageUrlBuilder.officialArtwork(id),
         types = types.map { it.type.name },
         baseExperience = baseExperience,
         height = height,
@@ -95,6 +96,4 @@ fun PokemonDetail.toDetailEntity(): PokemonDetailEntity {
     )
 }
 
-private fun buildImageUrl(id: Int): String {
-    return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
-}
+// Image URL construction centralized in ImageUrlBuilder

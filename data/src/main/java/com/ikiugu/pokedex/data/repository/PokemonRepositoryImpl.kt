@@ -119,8 +119,4 @@ class PokemonRepositoryImpl @Inject constructor(
             emit(Result.Error(e.toPokemonError()))
         }
     }.flowOn(Dispatchers.IO)
-
-    private fun buildImageUrl(id: Int): String {
-        return "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
-    }
 }
